@@ -1,0 +1,9 @@
+# This is a skeleton for the services in a namespace,
+# List all the serviices and port for each namepsace
+#NAMESPACE: 
+#            - WEBSHOP: 80
+#            - ADMIN:   81
+#            - JOB:     82
+NAMESPACE:
+  - service: 'nginx'
+    port:    80

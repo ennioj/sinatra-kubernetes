@@ -1,0 +1,5 @@
+namespaces:
+  - nginx-80-alpha
+  - nginx-80-beta
+  - nginx-8090-exposed
+  - nginx-8190-exposed

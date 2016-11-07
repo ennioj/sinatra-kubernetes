@@ -1,28 +1,33 @@
+require 'rubygems'
 require 'sinatra'
-require 'sinatra/activerecord'
-require './config/environments' #database configuration
-require './items/item'
+require 'webrick'
+require 'rest-client'
+require 'octokit'
+require 'yaml'
+require 'logger'
+require 'digest/sha1'
+require 'webrick/httpproxy'
+require "rack/reverse_proxy"
 
-get '/' do
-	erb :index
-end
+set :port, 8999
+set :environment, :production
+set :server, 'webrick'
+enable :sessions
+set :timeout, 120
 
-post '/submit' do
-	@item = Item.new(params[:item])
-	if @item.save
-		redirect '/items'
-	else
-		"Sorry, there was an error!"
-	end
-end
+APP_ROOT = File.expand_path './', File.dirname(__FILE__)
 
-get '/items' do
-	@items = Item.all
-	erb :items
-end
+skeleton = YAML::load_file(APP_ROOT+'/config/skeleton.yaml')
+namaspaces_file = YAML::load_file(APP_ROOT+'/config/namespaces.yaml')
+namespaces = namaspaces_file['namespaces']
 
-after do
-  # Close the connection after the request is done so that we don't
-  # deplete the ActiveRecord connection pool.
-  ActiveRecord::Base.connection.close
+use Rack::ReverseProxy do
+  namespaces.each do |namespace|
+    skeleton['NAMESPACE'].each do |service|
+      service_name = service['service']
+      port = service['port'].to_s
+      #reverse_proxy /^\/documentation\/?(.*)$/, 'http://localhost/$1'
+      reverse_proxy /^\/#{namespace}\/#{service_name}\/?(.*)$/, 'http://'+service_name+"."+namespace+':'+port+'/$1'
+    end
+  end
 end
